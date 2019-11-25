@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LockFreeSet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">che</a> &gt; <a href="index.source.html" class="el_package">default</a> &gt; <span class="el_source">LockFreeSet.java</span></div><h1>LockFreeSet.java</h1><pre class="source lang-java linenums">public class LockFreeSet&lt;T extends Comparable&lt;T&gt;&gt; implements MySet&lt;T&gt; {
+    private Node&lt;T&gt; head;
+
+<span class="fc" id="L4">    public LockFreeSet() {</span>
+<span class="fc" id="L5">        this.head = new Node&lt;T&gt;(null, null);</span>
+<span class="fc" id="L6">    }</span>
+
+    @Override
+    public boolean add(T value) {
+        while (true) {
+<span class="fc" id="L11">            Pair&lt;T&gt; pair = search(value);</span>
+<span class="fc" id="L12">            Node&lt;T&gt; prev = pair.prev;</span>
+<span class="fc" id="L13">            Node&lt;T&gt; curr = pair.curr;</span>
+
+<span class="fc bfc" id="L15" title="All 4 branches covered.">            if (curr != null &amp;&amp; curr.value().compareTo(value) == 0) {</span>
+<span class="fc" id="L16">                return false;</span>
+            } else {
+<span class="fc" id="L18">                Node&lt;T&gt; node = new Node&lt;T&gt;(value, curr);</span>
+<span class="fc bfc" id="L19" title="All 2 branches covered.">                if (prev.casNext(curr, node)) {</span>
+<span class="fc" id="L20">                    return true;</span>
+                }
+            }
+<span class="fc" id="L23">        }</span>
+    }
+
+    @Override
+    public boolean remove(T value) {
+        while (true) {
+<span class="fc" id="L29">            Pair&lt;T&gt; pair = search(value);</span>
+<span class="fc" id="L30">            Node&lt;T&gt; prev = pair.prev;</span>
+<span class="fc" id="L31">            Node&lt;T&gt; curr = pair.curr;</span>
+
+<span class="fc bfc" id="L33" title="All 4 branches covered.">            if (curr == null || curr.value().compareTo(value) != 0) {</span>
+<span class="fc" id="L34">                return false;</span>
+            } else {
+<span class="fc" id="L36">                Node&lt;T&gt; next = curr.getNext();</span>
+<span class="fc bfc" id="L37" title="All 2 branches covered.">                if (!curr.mark(next))</span>
+<span class="fc" id="L38">                    continue;</span>
+<span class="fc" id="L39">                prev.casNext(curr, next);</span>
+<span class="fc" id="L40">                return true;</span>
+            }
+        }
+    }
+
+    @Override
+    public boolean contains(T value) {
+<span class="fc" id="L47">        Node&lt;T&gt; curr = head.getNext();</span>
+<span class="fc bfc" id="L48" title="All 4 branches covered.">        while (curr != null &amp;&amp; curr.value().compareTo(value) &lt; 0) {</span>
+<span class="fc" id="L49">            curr = curr.getNext();</span>
+        }
+<span class="fc bfc" id="L51" title="All 6 branches covered.">        return curr != null &amp;&amp; curr.value().compareTo(value) == 0 &amp;&amp; !curr.isMarked();</span>
+    }
+
+    private Pair&lt;T&gt; search(T value) {
+        retry:
+        while (true) {
+<span class="fc" id="L57">            Node&lt;T&gt; prev = head;</span>
+<span class="fc" id="L58">            Node&lt;T&gt; cur = head.getNext();</span>
+            Node&lt;T&gt; next;
+<span class="fc bfc" id="L60" title="All 2 branches covered.">            while (cur != null) {</span>
+<span class="fc" id="L61">                next = cur.getNext();</span>
+<span class="fc bfc" id="L62" title="All 2 branches covered.">                if (cur.isMarked()) {</span>
+<span class="fc bfc" id="L63" title="All 2 branches covered.">                    if (!prev.casNext(cur, next))</span>
+<span class="fc" id="L64">                        continue retry;</span>
+<span class="fc" id="L65">                    cur = next;</span>
+                } else {
+<span class="fc bfc" id="L67" title="All 2 branches covered.">                    if (cur.value().compareTo(value) &gt;= 0)</span>
+<span class="fc" id="L68">                        return new Pair&lt;T&gt;(prev, cur);</span>
+<span class="fc" id="L69">                    prev = cur;</span>
+<span class="fc" id="L70">                    cur = next;</span>
+                }
+            }
+<span class="fc" id="L73">            return new Pair&lt;T&gt;(prev, null);</span>
+        }
+    }
+
+    class Pair&lt;T extends Comparable&lt;T&gt;&gt; {
+        final Node&lt;T&gt; prev, curr;
+
+<span class="fc" id="L80">        Pair(Node&lt;T&gt; prev, Node&lt;T&gt; cur) {</span>
+<span class="fc" id="L81">            this.prev = prev;</span>
+<span class="fc" id="L82">            this.curr = cur;</span>
+<span class="fc" id="L83">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

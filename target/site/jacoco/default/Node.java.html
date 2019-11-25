@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Node.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">che</a> &gt; <a href="index.source.html" class="el_package">default</a> &gt; <span class="el_source">Node.java</span></div><h1>Node.java</h1><pre class="source lang-java linenums">import java.util.concurrent.atomic.AtomicMarkableReference;
+
+class Node&lt;T extends Comparable&lt;T&gt;&gt; {
+    private T value;
+    private final AtomicMarkableReference&lt;Node&lt;T&gt;&gt; next;
+
+<span class="fc" id="L7">    Node(T value, Node&lt;T&gt; next) {</span>
+<span class="fc" id="L8">        this.value = value;</span>
+<span class="fc" id="L9">        this.next = new AtomicMarkableReference&lt;&gt;(next, false);</span>
+<span class="fc" id="L10">    }</span>
+
+    T value() {
+<span class="fc" id="L13">        return value;</span>
+    }
+
+    Node&lt;T&gt; getNext() {
+<span class="fc" id="L17">        return next.getReference();</span>
+    }
+
+    boolean casNext(Node&lt;T&gt; old, Node&lt;T&gt; next) {
+<span class="fc" id="L21">        return this.next.compareAndSet(old, next, false, false);</span>
+    }
+
+    boolean mark(Node&lt;T&gt; next) {
+<span class="fc" id="L25">        return this.next.compareAndSet(next, next, false, true);</span>
+    }
+
+    boolean isMarked() {
+<span class="fc" id="L29">        return next.isMarked();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>
